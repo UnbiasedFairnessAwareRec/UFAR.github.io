@@ -24,15 +24,15 @@ Fairness in the recommendation domain has recently attracted increasing attentio
 
 # 5. Code Description
 
-The structure of the code files is the same as [RecBole](https://github.com/RUCAIBox/RecBole) and our implementations are stored in **recbole/data/model/fair_recommender**.
+The structure of the code files is the same as [RecBole](https://github.com/RUCAIBox/RecBole) and our implementations are stored in **recbole/data/model/fair_recommender** directory.
 
 # 6. Usage
 
 1. Download the code
-2. Download the datasets and put them into datasets.
+2. Download the datasets and put them into **datasets** directory.
 3. Before running programs of our models, you should pre-estimate propensity-scores by running `run_recbole.py` and setting test.yaml for heu_mlp_p model.
 
-    set parameters in test.yaml
+    set parameters in test.yaml (taking WeChat dataset as example)
 
     ```yaml
     show_progress: True
@@ -89,8 +89,73 @@ The structure of the code files is the same as [RecBole](https://github.com/RUCA
     ```
     where -m denotes model name. -d denotes dataset name. --config_files denotes config file name.
 
-4. Run our framework
-    You also need to set parameters in test.yaml and then run program like above.
+# 4. Run our framework
+    
+Use pre-estimated propensity score as $\hat{P}$ and set related parameters in test.yaml. We take UFAR_MF_MLP on WeChat dataset as example.
+
+  set parameters in test.yaml
+  
+  ```yaml
+  # Environment settings
+  show_progress: True
+  gpu_id: 0
+  seed: 2022
+  use_gpu: True
+  state: INFO
+  reproducibility: True
+  data_path: 'dataset'
+  checkpoint_dir: 'saved/ufar_mf_mlp'
+  dataset: wechat
+  save_dataset: False
+  save_dataloaders: False
+
+  # Data settings
+  sample_by_user_group: True
+  propensity_pretrain: 'saved/heu_mlp_p/your_model_pth_file_name'
+  benchmark_filename: ['train','valid','test']
+  threshold:  
+  label: 1
+
+  # model config
+  model: UFAR_MF_MLP
+  embedding_size: 64
+  weight_decay: 1e-4
+
+  tau: 1
+  lambda1: 1000
+  lambda2: 10
+  softrank_K: 10
+
+  # training settings
+  epochs: 1000
+  train_batch_size: 25600
+  learner: adam
+  eval_step: 1
+  stopping_step: 10
+  neg_sampling:
+  uniform: 99
+
+  learning_rate: 0.1
+  ips_lr: 0.0001
+  train_interval: 8
+
+  # evalution settings
+  eval_args:
+  mode: full
+  metrics: ["NDCG","Precision","Recall"]
+  UGF: True
+  valid_metric: NDCG@10
+  topk: [10]
+  eval_batch_size: 4096
+  loss_decimal_place: 5
+  metric_decimal_place: 5
+  ```
+  run program
+
+  ```shell
+  python run_recbole.py -m UFAR_MF_MLP -d wechat --config_files test.yaml
+  ```
+    
 
 # 7. Detailed parameter search ranges
 
